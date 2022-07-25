@@ -1,49 +1,46 @@
 import throttle from 'lodash.throttle';
+import { getRefs } from './getRefs';
+import storage from './storage';
 
-let LOCALSTORAGE_KEY = 'feedback-form-state'
-const form = document.querySelector('.feedback-form')
+const LOCALSTORAGE_KEY = 'feedback-form-state';
+const refs = getRefs();
 
-getFromLocalStorage()
+initForm();
+refs.form.addEventListener('input', handleInput);
 
-form.addEventListener('input', throttle(saveInLocalStorage, 500))
-form.addEventListener('submit', formSubmit)
 
-function saveInLocalStorage() { 
-    const formEmail = form.elements.email.value
-    const formMessage = form.elements.message.value
-    const feedback = {
-        email: formEmail,
-        message: formMessage
-    }
-
-    const feedbackJSON = JSON.stringify(feedback);
-    localStorage.setItem(LOCALSTORAGE_KEY, feedbackJSON)
+function handleInput(event) {
+  let savedData = storage.load(LOCALSTORAGE_KEY);
+  savedData = savedData ? savedData : {};
+  const { name, value } = event.target;
+  savedData[name] = value;
+  storage.save(LOCALSTORAGE_KEY, savedData);
 }
 
-function getFromLocalStorage() {
-    const feedbackJSON = localStorage.getItem(LOCALSTORAGE_KEY || '')
-    if (!feedbackJSON) return
-    
-    const feedback = JSON.parse(feedbackJSON)
-    
-    form.elements.email.value = feedback.email
-    form.elements.message.value = feedback.message
+function initForm() {
+  let savedData = storage.load(LOCALSTORAGE_KEY);
+  if (savedData) {
+    refs.form.elements.name.value = savedData.name;
+    Object.entries(savedData).forEach(([name, value]) => {
+      refs.form.elements[name].value = value;
+    });
+  }
 }
+refs.form.addEventListener('submit', handleSubmit);
+function handleSubmit(event) {
+  event.preventDefault();
+  const { email, message} = event.target.elements;
 
-function formSubmit(e) { 
-    e.preventDefault()
-
-    const formEmail = form.elements.email.value
-    const formMessage = form.elements.message.value
-    const feedback = {
-        email: formEmail,
-        message: formMessage
-    }
-
-    if (feedback.email === '' || feedback.message === '') { return }
-
-    console.log(feedback)
-    
-    form.reset()
-    localStorage.removeItem(LOCALSTORAGE_KEY)
+  if (email.value === '' || message.value === '') {
+    console.log('Заповніть всі поля');
+    return;
+  }
+  const formData = new FormData(refs.form);
+  const userData = {};
+  formData.forEach((value, name) => {
+    userData[name] = value;
+  });
+  console.log(userData);
+  event.target.reset();
+  storage.remove(LOCALSTORAGE_KEY);
 }
