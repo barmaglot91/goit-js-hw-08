@@ -12,17 +12,18 @@ refs.form.addEventListener('input', throttle(saveInLocalStorage, 500));
 function saveInLocalStorage(event) {
   let savedData = storage.load(LOCALSTORAGE_KEY);
   savedData = savedData ? savedData : {};
-  const { email, value } = event.target;
-  savedData[email] = value;
+  const { name, value } = event.target;
+  savedData[name] = value;
   storage.save(LOCALSTORAGE_KEY, savedData);
 }
 
 function initForm() {
   let savedData = storage.load(LOCALSTORAGE_KEY);
   if (savedData) {
-    refs.form.elements.email.value = savedData.email;
-    Object.entries(savedData).forEach(([email, value]) => {
-      refs.form.elements[value] = email;
+    // console.log(savedData)
+
+    Object.entries(savedData).forEach(([name, value]) => {
+      refs.form.elements[name].value = value;
     });
   }
 }
@@ -37,8 +38,8 @@ function handleSubmit(event) {
   }
   const formData = new FormData(refs.form);
   const userData = {};
-  formData.forEach((value, email) => {
-    userData[email] = value;
+  formData.forEach((value, name) => {
+    userData[name] = value;
   });
   console.log(userData);
   event.target.reset();
